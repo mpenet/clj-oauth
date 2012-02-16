@@ -4,8 +4,13 @@
   oauth.client
   (:require [oauth.digest :as digest]
             [oauth.signature :as sig]
-            [clj-http.client :as httpclient])
+            [aleph.http :as a-http]
+            [aleph.formats :as formats]
+            [lamina.core :as lamina-c])
+
   (:use [clojure.string :only [join split upper-case]]))
+
+(def default-request-timeout (* 15 1000))
 
 (defrecord #^{:doc "OAuth consumer"}
     Consumer [key secret request-uri
@@ -25,8 +30,18 @@
   "Builds the URI to the Service Provider where the User will be prompted
 to approve the Consumer's access to their account."
   [consumer token]
-  (str (:authorize-uri consumer)
-       "?" (httpclient/generate-query-string {:oauth_token token})))
+  (->> token
+       (mapcat (fn [[k v]]
+                 (if (sequential? v)
+                   (map #(str (formats/url-encode (name %1))
+                              "="
+                              (formats/url-encode (str %2)))
+                        (repeat k) v)
+                   [(str (formats/url-encode (name k))
+                         "="
+                         (formats/url-encode (str v)))])))
+       (join "&")
+       (str (:authorize-uri consumer) "?")))
 
 (defn authorization-header
   "OAuth credentials formatted for the Authorization HTTP header."
@@ -43,31 +58,38 @@ to approve the Consumer's access to their account."
 (defn form-decode
   "Parse form-encoded bodies from OAuth responses."
   [s]
-  (if s
-    (into {}
-          (map (fn [kv]
-                 (let [[k v] (split kv #"=")
-                       k (or k "")
-                       v (or v "")]
-                   [(keyword (sig/url-decode k)) (sig/url-decode v)]))
-               (split s #"&")))))
+  (when s
+    (->> (split s #"&")
+         (map (fn [kv]
+                (let [[k v] (split kv #"=")
+                      k (or k "")
+                      v (or v "")]
+                  [(keyword (sig/url-decode k)) (sig/url-decode v)])))
+         (into {}))))
 
 (defn- check-success-response [m]
   (let [code (:status m)]
     (if (or (< code 200)
             (>= code 300))
-      (throw (new Exception (str "Got non-success code: " code ". "
-                                 "Content: " (:body m))))
+      (throw (new Exception
+                  (str "Got non-success code: " code ". "
+                       "Content: " (formats/bytes->string (:body m)))))
       m)))
-(defn post-request-body-decoded [url & [req]]
-  #_(success-content
-     (http/post (:request-uri consumer)
-                :headers {"Authorization" (authorization-header params)}
-                :parameters (http/map->params {:use-expect-continue false})
-                :as :urldecoded))
-  (form-decode
-   (:body (check-success-response
-           (httpclient/post url req)))))
+
+(defn post-request-body-decoded [url & [req timeout]]
+  (lamina-c/run-pipeline
+   (a-http/http-request
+    (merge {:method :post
+            :url url
+            :auto-transform true}
+           req)
+    (or timeout default-request-timeout))
+   :error-handler (fn [e]
+                    (lamina-c/complete nil)
+                    (.printStackTrace e))
+   check-success-response
+   :body
+   form-decode))
 
 (defn- oauth-post-request-decoded [url oauth-params & [form-params]]
   (let [req (merge
@@ -129,7 +151,10 @@ Authorization HTTP header or added as query parameters to the request."
                                                (:oauth_token
                                                 request-token)))
            token-secret (:oauth_token_secret request-token)]
-       (get-oauth-token consumer (:access-uri consumer) unsigned-params token-secret))))
+       (get-oauth-token consumer
+                        (:access-uri consumer)
+                        unsigned-params
+                        token-secret))))
 
 (defn xauth-access-token
   "Request an access token with a username and password with xAuth."

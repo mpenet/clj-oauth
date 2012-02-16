@@ -1,28 +1,27 @@
 (ns oauth.client-twitter-test
   (:refer-clojure :exclude [key])
   (:require [oauth.client :as oc])
-  (:use clojure.test)
-  (:load "twitter_keys"))
+  (:use clojure.test))
 
-(def consumer (oc/make-consumer key
-                                secret
+(def consumer (oc/make-consumer "Your app consumer key"
+                                "Your app consumer secret"
                                 "https://api.twitter.com/oauth/request_token"
                                 "https://api.twitter.com/oauth/access_token"
                                 "https://api.twitter.com/oauth/authorize"
                                 :hmac-sha1))
 (deftest
-    #^{:doc "Test requesting a token from Twitter.
+  #^{:doc "Test requesting a token from Twitter.
             Considered to pass if no exception is thrown."}
   request-token
-  (oc/request-token consumer))
+  @(oc/request-token consumer))
 
 (deftest
-    #^{:doc "Considered to pass if no exception is thrown."}
+  #^{:doc "Considered to pass if no exception is thrown."}
   user-approval-uri
-  (is (instance? String (oc/user-approval-uri consumer (oc/request-token consumer)))))
+  (is (instance? String (oc/user-approval-uri consumer request-token))))
 
 #_(deftest
     #^{:doc "Considered to pass if no exception is thrown."}
-  access-token
-  (let [request-token (oc/request-token consumer)]
-    (oc/access-token consumer request-token ...verifier...)))
+    access-token
+    (let [request-token @(oc/request-token consumer)]
+      @(oc/access-token consumer request-token ...verifier...)))

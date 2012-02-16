@@ -43,7 +43,7 @@ Compojure.
     ;; then be redirected to the callback URI provided with the
     ;; request-token.
     (oauth/user-approval-uri consumer
-                             request-token)
+                             (:oauth_token request-token))
 
     ;; Assuming the User has approved the request token, trade it for an access token.
     ;; The access token will then be used when accessing protected resources for the User.

@@ -30,18 +30,9 @@
   "Builds the URI to the Service Provider where the User will be prompted
 to approve the Consumer's access to their account."
   [consumer token]
-  (->> token
-       (mapcat (fn [[k v]]
-                 (if (sequential? v)
-                   (map #(str (formats/url-encode (name %1))
-                              "="
-                              (formats/url-encode (str %2)))
-                        (repeat k) v)
-                   [(str (formats/url-encode (name k))
-                         "="
-                         (formats/url-encode (str v)))])))
-       (join "&")
-       (str (:authorize-uri consumer) "?")))
+  (format "%s?oauth_token=%s"
+          (:authorize-uri consumer)
+          (formats/url-encode token)))
 
 (defn authorization-header
   "OAuth credentials formatted for the Authorization HTTP header."

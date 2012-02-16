@@ -8,7 +8,7 @@ also includes [Lamina](https://github.com/ztellman/lamina), instead of
 Apache components.
 
 This means that all the function call that usually
-block now return a Lamina [Result Channels](https://github.com/ztellman/lamina/wiki/Result-Channels).
+block now return a Lamina [Result Channel](https://github.com/ztellman/lamina/wiki/Result-Channels).
 
 The server support makes it simple to add OAuth support to any
 [Ring](http://github.com/mmcgrana/ring) based web applications such as

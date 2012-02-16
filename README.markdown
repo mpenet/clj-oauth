@@ -2,7 +2,7 @@
 
 `clj-oauth` provides [OAuth](http://oauth.net) Client and Server support for Clojure programs.
 
-**This is a fork of the original clj-http using Zach Tellman's
+**This is a fork of the original clj-oauth using Zach Tellman's
 [Aleph](https://github.com/ztellman/aleph) (based on Netty), which
 also includes [Lamina](https://github.com/ztellman/lamina), instead of
 Apache components.**

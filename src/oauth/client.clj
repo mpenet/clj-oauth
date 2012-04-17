@@ -2,13 +2,13 @@
     #^{:author "Matt Revelle"
        :doc "OAuth client library for Clojure."}
   oauth.client
-  (:require [oauth.digest :as digest]
-            [oauth.signature :as sig]
-            [aleph.http :as a-http]
-            [aleph.formats :as formats]
-            [lamina.core :as lamina-c])
-
-  (:use [clojure.string :only [join split upper-case]]))
+  (:require
+   [clojure.string :refer [join split upper-case]]
+   [oauth.digest :as digest]
+   [oauth.signature :as sig]
+   [aleph.http :as a-http]
+   [aleph.formats :as formats]
+   [lamina.core :as lamina-c]))
 
 (def default-request-timeout (* 15 1000))
 

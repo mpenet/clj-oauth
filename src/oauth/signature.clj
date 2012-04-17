@@ -2,8 +2,9 @@
     #^{:author "Matt Revelle"
        :doc "OAuth client library for Clojure."}
   oauth.signature
-  (:require [oauth.digest :as digest])
-  (:use [clojure.string :only [join]]))
+  (:require
+   [oauth.digest :as digest]
+   [clojure.string :refer [join]]))
 
 (declare rand-str
          base-string
